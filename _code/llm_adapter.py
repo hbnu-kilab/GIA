@@ -222,27 +222,9 @@ def _call_llm_json(
                 )
             except Exception:
                 print("[LLM] json_schema rejected; retrying with response_format=json_object")
-                # OpenAI 요구사항: response_format=json_object 사용 시 메시지 내에 'json' 단어가 포함되어야 함
-                # 메시지에 'json'이 없다면 개발자 메시지를 추가해 안전하게 통과시킨다.
-                messages_json = list(messages)
-                try:
-                    has_json_kw = any(
-                        isinstance(m, dict) and isinstance(m.get("content"), str) and ("json" in m["content"].lower())
-                        for m in messages_json
-                    )
-                except Exception:
-                    has_json_kw = False
-                if not has_json_kw:
-                    messages_json.append({
-                        "role": "developer",
-                        "content": (
-                            "Return only JSON. Output a single valid JSON object or array that strictly follows the schema. "
-                            "Do not include any prose, markdown, or code fences. json"
-                        )
-                    })
                 resp = client.chat.completions.create(
                     model=chosen_model,
-                    messages=messages_json,
+                    messages=messages,
                     response_format={"type": "json_object"},
                     max_tokens=max_output_tokens,
                     temperature=temperature,
